@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório das contas de água e luz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 30px;
+            color: #4361ee;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .section strong {
+            font-size: 16px;
+            display: block;
+            margin-bottom: 10px;
+            color: #3f37c9;
+        }
+        .item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .total {
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 15px;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Relatório das contas de água e luz</h1>
+    
+    <div class="section">
+        <strong>Iara:</strong>
+        <div class="item">
+            <span>Luz:</span>
+            <span>{{ luz_iara }}</span>
+        </div>
+        <div class="item">
+            <span>Água:</span>
+            <span>{{ agua_iara }}</span>
+        </div>
+        <div class="total">
+            <span>Total:</span>
+            <span>{{ total_iara }}</span>
+        </div>
+    </div>
+    
+    <div class="section">
+        <strong>Rodrigo:</strong>
+        <div class="item">
+            <span>Luz:</span>
+            <span>{{ luz_rodrigo }}</span>
+        </div>
+        <div class="item">
+            <span>Água:</span>
+            <span>{{ agua_rodrigo }}</span>
+        </div>
+        <div class="total">
+            <span>Total:</span>
+            <span>{{ total_rodrigo }}</span>
+        </div>
+    </div>
+    
+    <div class="footer">
+        Gerado em {{ now.strftime('%d/%m/%Y às %H:%M') }}
+    </div>
+</body>
+</html>

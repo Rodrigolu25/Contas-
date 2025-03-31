@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório das contas de água e luz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #ced4da;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(72, 149, 239, 0.25);
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: #3aa8d8;
+        }
+
+        .results {
+            display: none;
+            margin-top: 2rem;
+        }
+
+        .results h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .result-card {
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .result-card h3 {
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Relatório das contas de água e luz</h1>
+            <p class="subtitle">Calcule o valor que cada um deve pagar de forma justa</p>
+        </header>
+
+        <div class="card">
+            <form method="POST" action="/">
+                <div class="form-group">
+                    <label for="luz">Valor da Luz (R$):</label>
+                    <input type="text" class="form-control" name="luz" placeholder="Ex: 150,00" required>
+                </div>
+                <div class="form-group">
+                    <label for="agua">Valor da Água (R$):</label>
+                    <input type="text" class="form-control" name="agua" placeholder="Ex: 80,00" required>
+                </div>
+                <button type="submit" class="btn">Calcular</button>
+            </form>
+        </div>
+
+        {% if total_iara %}
+        <div class="card results" style="display: block;">
+            <h2>Resultados</h2>
+            
+            <div class="result-grid">
+                <div class="result-card">
+                    <h3>Iara</h3>
+                    <p>Luz: <span class="result-value">{{ luz_iara }}</span></p>
+                    <p>Água: <span class="result-value">{{ agua_iara }}</span></p>
+                    <p>Total: <span class="result-value">{{ total_iara }}</span></p>
+                </div>
+                
+                <div class="result-card">
+                    <h3>Rodrigo</h3>
+                    <p>Luz: <span class="result-value">{{ luz_rodrigo }}</span></p>
+                    <p>Água: <span class="result-value">{{ agua_rodrigo }}</span></p>
+                    <p>Total: <span class="result-value">{{ total_rodrigo }}</span></p>
+                </div>
+            </div>
+
+            <form method="POST" action="/download_pdf" class="actions">
+                <input type="hidden" name="luz_iara" value="{{ luz_iara }}">
+                <input type="hidden" name="agua_iara" value="{{ agua_iara }}">
+                <input type="hidden" name="total_iara" value="{{ total_iara }}">
+                <input type="hidden" name="luz_rodrigo" value="{{ luz_rodrigo }}">
+                <input type="hidden" name="agua_rodrigo" value="{{ agua_rodrigo }}">
+                <input type="hidden" name="total_rodrigo" value="{{ total_rodrigo }}">
+                <button type="submit" class="btn btn-success">Baixar PDF</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
