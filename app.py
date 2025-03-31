@@ -12,78 +12,85 @@ PDFKIT_CONFIG = None
 # Verifica se estamos no Render (variável de ambiente específica)
 IS_RENDER = os.getenv('RENDER', '').lower() == 'true'
 
-if IS_RENDER:
-    # Configuração para o Render (usando o pacote system-installed)
-    try:
+# Configuração do PDFKit
+try:
+    if IS_RENDER:
+        # No Render, assumimos que wkhtmltopdf está instalado no sistema
         PDFKIT_CONFIG = pdfkit.configuration()
-    except Exception as e:
-        print(f"Erro na configuração do PDFKit no Render: {str(e)}")
-else:
-    # Configuração para desenvolvimento local
-    WKHTMLTOPDF_PATH = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
-    if os.path.exists(WKHTMLTOPDF_PATH):
-        try:
+    else:
+        # Configuração para desenvolvimento local
+        WKHTMLTOPDF_PATH = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+        if os.path.exists(WKHTMLTOPDF_PATH):
             PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
             # Teste básico
             pdfkit.from_string('<html><body><h1>Test</h1></body></html>', False, configuration=PDFKIT_CONFIG)
-        except Exception as e:
-            print(f"Erro na configuração local do PDFKit: {str(e)}")
+        else:
+            print("Aviso: wkhtmltopdf não encontrado no caminho padrão. Funcionalidade de PDF estará limitada.")
+except Exception as e:
+    print(f"Erro na configuração do PDFKit: {str(e)}")
+
+# Configuração de locale com fallbacks
+def configure_locale():
+    for loc in ['pt_BR.UTF-8', 'Portuguese_Brazil.1252', '']:
+        try:
+            locale.setlocale(locale.LC_ALL, loc)
+            break
+        except locale.Error:
+            continue
+
+configure_locale()
+
+# Função para formatar valores monetários
+def format_currency(value):
+    try:
+        return locale.currency(value, grouping=True, symbol=True)
+    except:
+        # Fallback caso o locale não funcione
+        return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    total_iara = total_rodrigo = luz_iara = agua_iara = luz_rodrigo = agua_rodrigo = ""
+    # Valores padrão
+    valores = {
+        'total_iara': '', 'luz_iara': '', 'agua_iara': '',
+        'luz_rodrigo': '', 'agua_rodrigo': '', 'total_rodrigo': '',
+        'error': None
+    }
 
     if request.method == 'POST':
         try:
-            valor_luz_texto = request.form.get('luz', '').replace("R$", "").replace(".", "").replace(",", ".").strip()
-            valor_agua_texto = request.form.get('agua', '').replace("R$", "").replace(".", "").replace(",", ".").strip()
+            # Processamento dos valores de entrada
+            valor_luz = request.form.get('luz', '0').replace("R$", "").replace(".", "").replace(",", ".").strip()
+            valor_agua = request.form.get('agua', '0').replace("R$", "").replace(".", "").replace(",", ".").strip()
 
-            valor_luz = float(valor_luz_texto) if valor_luz_texto else 0
-            valor_agua = float(valor_agua_texto) if valor_agua_texto else 0
+            # Conversão para float
+            valor_luz = float(valor_luz) if valor_luz else 0
+            valor_agua = float(valor_agua) if valor_agua else 0
 
-            # Cálculos
-            iaraluz = valor_luz / 3
-            iaraagua = valor_agua / 2
-            luz_iara = iaraluz
-            agua_iara = iaraagua
+            # Cálculos das proporções
+            luz_iara = valor_luz / 3
+            agua_iara = valor_agua / 2
             total_iara = luz_iara + agua_iara
 
-            rodrigoluz = valor_luz / 3 * 2
-            rodrigoagua = valor_agua / 2
-            luz_rodrigo = rodrigoluz
-            agua_rodrigo = rodrigoagua
-            total_rodrigo = rodrigoluz + rodrigoagua
+            luz_rodrigo = valor_luz * 2 / 3
+            agua_rodrigo = valor_agua / 2
+            total_rodrigo = luz_rodrigo + agua_rodrigo
 
-            # Formatação de moeda com fallback
-            try:
-                locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-            except:
-                locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
-            
-            def format_currency(value):
-                try:
-                    return locale.currency(value, grouping=True, symbol=True)
-                except:
-                    return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-
-            total_iara = format_currency(total_iara)
-            luz_iara = format_currency(luz_iara)
-            agua_iara = format_currency(agua_iara)
-            luz_rodrigo = format_currency(luz_rodrigo)
-            agua_rodrigo = format_currency(agua_rodrigo)
-            total_rodrigo = format_currency(total_rodrigo)
+            # Formatação dos valores
+            valores.update({
+                'total_iara': format_currency(total_iara),
+                'luz_iara': format_currency(luz_iara),
+                'agua_iara': format_currency(agua_iara),
+                'luz_rodrigo': format_currency(luz_rodrigo),
+                'agua_rodrigo': format_currency(agua_rodrigo),
+                'total_rodrigo': format_currency(total_rodrigo)
+            })
         
         except Exception as e:
             print(f"Erro no processamento: {str(e)}")
-            return render_template('index.html', error="Ocorreu um erro ao processar os valores. Verifique os dados e tente novamente.")
+            valores['error'] = "Ocorreu um erro ao processar os valores. Verifique os dados e tente novamente."
 
-    return render_template('index.html', 
-                         total_iara=total_iara, 
-                         luz_iara=luz_iara, 
-                         agua_iara=agua_iara,
-                         luz_rodrigo=luz_rodrigo, 
-                         agua_rodrigo=agua_rodrigo, 
-                         total_rodrigo=total_rodrigo)
+    return render_template('index.html', **valores)
 
 @app.route('/download_pdf', methods=['POST'])
 def download_pdf():
@@ -91,17 +98,21 @@ def download_pdf():
         return "Serviço de PDF não disponível. Contate o administrador.", 503
 
     try:
-        # Obter dados do formulário
-        data = {field: request.form.get(field, 'R$ 0,00') 
-               for field in ['luz_iara', 'agua_iara', 'total_iara', 
-                            'luz_rodrigo', 'agua_rodrigo', 'total_rodrigo']}
+        # Dados do formulário
+        dados = {
+            'luz_iara': request.form.get('luz_iara', 'R$ 0,00'),
+            'agua_iara': request.form.get('agua_iara', 'R$ 0,00'),
+            'total_iara': request.form.get('total_iara', 'R$ 0,00'),
+            'luz_rodrigo': request.form.get('luz_rodrigo', 'R$ 0,00'),
+            'agua_rodrigo': request.form.get('agua_rodrigo', 'R$ 0,00'),
+            'total_rodrigo': request.form.get('total_rodrigo', 'R$ 0,00'),
+            'now': datetime.now().strftime("%d/%m/%Y %H:%M")
+        }
 
-        rendered_html = render_template(
-            "iara_pdf.html",
-            **data,
-            now=datetime.now().strftime("%d/%m/%Y %H:%M")
-        )
+        # Renderização do template PDF
+        rendered_html = render_template("iara_pdf.html", **dados)
 
+        # Opções do PDF
         options = {
             'page-size': 'A4',
             'margin-top': '15mm',
@@ -113,7 +124,10 @@ def download_pdf():
             'enable-local-file-access': None
         }
 
+        # Geração do PDF
         pdf = pdfkit.from_string(rendered_html, False, configuration=PDFKIT_CONFIG, options=options)
+        
+        # Configuração da resposta
         response = make_response(pdf)
         response.headers['Content-Type'] = 'application/pdf'
         response.headers['Content-Disposition'] = 'attachment; filename=Conta_de_Agua_e_Luz.pdf'
@@ -125,12 +139,4 @@ def download_pdf():
         return f"Erro ao gerar PDF: {str(e)}", 500
 
 if __name__ == '__main__':
-    # Configuração de locale com fallbacks
-    for loc in ['pt_BR.UTF-8', 'Portuguese_Brazil.1252', '']:
-        try:
-            locale.setlocale(locale.LC_ALL, loc)
-            break
-        except:
-            continue
-    
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
