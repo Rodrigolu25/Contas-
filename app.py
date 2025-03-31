@@ -103,10 +103,8 @@ def download_pdf():
         return "Serviço de PDF não disponível.", 503
 
     try:
-        # Get current datetime for the report
         now = datetime.now()
         
-        # Prepare data for template
         dados = {
             'luz_iara': request.form.get('luz_iara', 'R$ 0,00'),
             'agua_iara': request.form.get('agua_iara', 'R$ 0,00'),
@@ -114,7 +112,7 @@ def download_pdf():
             'luz_rodrigo': request.form.get('luz_rodrigo', 'R$ 0,00'),
             'agua_rodrigo': request.form.get('agua_rodrigo', 'R$ 0,00'),
             'total_rodrigo': request.form.get('total_rodrigo', 'R$ 0,00'),
-            'now': now  # Pass the datetime object directly
+            'now': now
         }
 
         pdf_options = {
@@ -140,7 +138,7 @@ def download_pdf():
             io.BytesIO(pdf),
             mimetype='application/pdf',
             as_attachment=True,
-            download_name=f'Contas_{now.strftime("%Y%m%d_%H%M")}.pdf'
+            download_name='Conta de água e luz.pdf'  # Nome ajustado conforme solicitado
         )
 
     except Exception as e:
