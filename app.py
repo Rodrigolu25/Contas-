@@ -3,7 +3,7 @@ import pdfkit
 import locale
 import os
 from datetime import datetime
-
+import sys
 app = Flask(__name__)
 
 # Configuração adaptável do PDFKit para diferentes ambientes
@@ -139,4 +139,8 @@ def download_pdf():
         return f"Erro ao gerar PDF: {str(e)}", 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    try:
+        app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 8080)), debug=False)
+    except KeyboardInterrupt:
+        print("\nServidor encerrado pelo usuário.")
+        sys.exit(0)
